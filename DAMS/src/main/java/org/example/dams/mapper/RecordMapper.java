@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -26,6 +27,8 @@ import java.util.Map;
 @Mapper
 public interface RecordMapper extends BaseMapper<Record> {
     IPage pageCC(IPage<Record> page, @Param(Constants.WRAPPER) Wrapper wrapper);
+
+
 
     @Select("SELECT r.*, " +
             "g.name as goodsname, " +
@@ -75,4 +78,26 @@ public interface RecordMapper extends BaseMapper<Record> {
             "GROUP BY g.goodsType, t.name " +
             "ORDER BY count DESC")
     List<Map<String, Object>> getGoodsTypeDistribution();
+
+    @Select("SELECT a.*, " +
+            "b.name as goodsname, " +
+            "c.name as username " +
+            "FROM record a " +
+            "LEFT JOIN goods b ON a.goods = b.id " +
+            "LEFT JOIN user c ON a.userId = c.id " +
+            "WHERE 1=1 " +
+            "<if test=\"param.name != null and param.name != ''\"> " +
+            "AND b.name like concat('%', #{param.name}, '%') " +
+            "</if> " +
+            "<if test=\"param.storage != null and param.storage != ''\"> " +
+            "AND a.storage = #{param.storage} " +
+            "</if> " +
+            "<if test=\"param.goodstype != null and param.goodstype != ''\"> " +
+            "AND a.goodstype = #{param.goodstype} " +
+            "</if> " +
+            "<if test=\"param.roleId == '2'\"> " +
+            "AND a.userId = #{param.userId} " +
+            "</if> " +
+            "ORDER BY a.createtime DESC")
+    List<Record> listPage(Page<Record> page, @Param("param") Record param);
 }

@@ -46,16 +46,24 @@
       </el-table-column>
       <el-table-column prop="remark" label="备注">
       </el-table-column>
-      <el-table-column prop="operate" label="操作" v-if="user.roleId!=2">
+      <el-table-column prop="operate" label="操作">
         <template slot-scope="scope">
-          <el-button size="small" type="success" @click="mod(scope.row)">编辑</el-button>
+          <el-button size="small" type="success" @click="mod(scope.row)" v-if="user.roleId!=2">编辑</el-button>
           <el-popconfirm
               title="确定删除吗？"
               @confirm="del(scope.row.id)"
               style="margin-left: 5px;"
           >
-            <el-button slot="reference" size="small" type="danger" style="margin-left: 5px" >删除</el-button>
+            <el-button slot="reference" size="small" type="danger" style="margin-left: 5px" v-if="user.roleId!=2" >删除</el-button>
           </el-popconfirm>
+          <el-button 
+            size="small" 
+            type="primary" 
+            @click="showComments(scope.row)"
+            style="margin-left: 5px"
+          >
+            评论与反馈
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -172,14 +180,27 @@
     <el-button type="primary" @click="doInGoodsSave">确 定</el-button>
   </span>
     </el-dialog>
+
+    <el-dialog
+        title="资产评论与反馈"
+        :visible.sync="commentDialogVisible"
+        width="60%"
+        center>
+      <comment-list 
+        v-if="commentDialogVisible"
+        :goods-id="currentRow.id"
+      />
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import SelectUser from "../user/SelectUser.vue";
+import CommentList from '../commentlist/CommentList.vue'
+
 export default {
   name: "GoodsManage",
-  components:{SelectUser},
+  components:{SelectUser, CommentList},
   data() {
     let checkDuplicate =(rule,value,callback)=>{
       if(this.form.id){
@@ -253,7 +274,8 @@ export default {
           {validator:checkCount,trigger: 'blur'}
 
         ]
-      }
+      },
+      commentDialogVisible: false,
     }
   },
   methods:{
@@ -501,7 +523,11 @@ export default {
         }
 
       })
-    }
+    },
+    showComments(row) {
+      this.currentRow = row;
+      this.commentDialogVisible = true;
+    },
   },
 
   beforeMount() {
@@ -513,5 +539,15 @@ export default {
 </script>
 
 <style scoped>
+/* 原有的样式保持不变 */
 
+/* 添加评论对话框相关样式 */
+.el-dialog__body {
+  padding: 10px 20px;
+}
+
+/* 确保评论列表在对话框中正确显示 */
+.comment-dialog >>> .el-dialog {
+  margin-top: 5vh !important;
+}
 </style>

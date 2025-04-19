@@ -18,7 +18,7 @@
         id, goods, userId, admin_id, count, createtime, remark
     </sql>
 
-    <select id="pageCC" resultType="org.example.dams.entity.RecordRes">
+    <select id="pageCC" resultType="org.example.dams.entity.Record">
         SELECT a.*,b.name goodsname,c.name storagename, d.name typename,
                (SELECT u.name FROM user u where u.id=a.userId) username,
                (SELECT u.name FROM user u where u.id=a.admin_id) adminname

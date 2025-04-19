@@ -60,4 +60,38 @@ public class Record implements Serializable {
     @TableField("action")
     private String action;
 
+    @TableField(exist = false)
+    private String adminname;
+
+    @TableField(exist = false)
+    private String goods_name;
+
+    @TableField(exist = false)
+    private String admin_name;
+
+    @TableField(exist = false)
+    private String user_name;
+
+    @TableField(exist = false)
+    private String storagename;
+
+    @TableField(exist = false)
+    private String typename;
+
+    public String getGoodsname() {
+        return goodsname;
+    }
+
+    public void setGoodsname(String goodsname) {
+        this.goodsname = goodsname;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
 }
