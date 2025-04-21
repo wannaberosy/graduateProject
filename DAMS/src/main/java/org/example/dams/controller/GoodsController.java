@@ -103,4 +103,10 @@ public class GoodsController {
         List<Map<String, Object>> distribution = goodsService.getTypeDistribution();
         return Result.success(distribution);
     }
+
+    @GetMapping("/list")
+    public Result list() {
+        List<Goods> list = goodsService.list();
+        return Result.success(list);
+    }
 }

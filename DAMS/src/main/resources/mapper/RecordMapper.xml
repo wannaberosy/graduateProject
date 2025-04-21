@@ -24,6 +24,6 @@
                (SELECT u.name FROM user u where u.id=a.admin_id) adminname
         FROM record a ,goods b,storage c, goodstype d /*where a.goods=b.id
                                                         and b.`storage`=c.id and b.goodsType = d.id*/
-        ${ew.customSqlSegment}
+            ${ew.customSqlSegment}
     </select>
 </mapper>

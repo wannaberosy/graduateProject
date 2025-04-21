@@ -38,8 +38,9 @@ public class UserController {
     private MenuService menuService;
 
     @GetMapping("/list")
-    public List<User> list(){
-        return userService.list();
+    public Result list() {
+        List<User> list = userService.list();
+        return Result.success(list);
     }
 
     @GetMapping("/findByNo")

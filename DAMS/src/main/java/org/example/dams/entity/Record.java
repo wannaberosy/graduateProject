@@ -64,15 +64,6 @@ public class Record implements Serializable {
     private String adminname;
 
     @TableField(exist = false)
-    private String goods_name;
-
-    @TableField(exist = false)
-    private String admin_name;
-
-    @TableField(exist = false)
-    private String user_name;
-
-    @TableField(exist = false)
     private String storagename;
 
     @TableField(exist = false)

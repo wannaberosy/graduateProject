@@ -79,7 +79,7 @@ public interface RecordMapper extends BaseMapper<Record> {
             "ORDER BY count DESC")
     List<Map<String, Object>> getGoodsTypeDistribution();
 
-    @Select("SELECT a.*, " +
+ /*   @Select("SELECT a.*, " +
             "b.name as goodsname, " +
             "c.name as username " +
             "FROM record a " +
@@ -99,5 +99,5 @@ public interface RecordMapper extends BaseMapper<Record> {
             "AND a.userId = #{param.userId} " +
             "</if> " +
             "ORDER BY a.createtime DESC")
-    List<Record> listPage(Page<Record> page, @Param("param") Record param);
+    List<Record> listPage(Page<Record> page, @Param("param") Record param);*/
 }

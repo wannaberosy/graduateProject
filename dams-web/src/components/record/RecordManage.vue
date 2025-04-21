@@ -25,7 +25,7 @@
 
 
     </div>
-    <el-table :data="tableData"
+    <el-table :data="mergedTableData"
               :header-cell-style="{ background: '#f2f5fc', color: '#555555' }"
               border
     >
@@ -34,7 +34,7 @@
       <el-table-column label="数据资产名" width="180">
         <template slot-scope="scope">
           <el-tooltip :content="scope.row.goodsname" placement="top" effect="light">
-            <span>{{ scope.row.goodsname || scope.row.goods || '-' }}</span>
+            <span>{{ scope.row.goodsname || '-' }}</span>
           </el-tooltip>
         </template>
       </el-table-column>
@@ -48,17 +48,24 @@
           <span>{{ scope.row.typename || '-' }}</span>
         </template>
       </el-table-column>
-<!--      <el-table-column label="操作人" width="180">
-        <template slot-scope="scope">
-          <span>{{ scope.row.adminname || '-' }}</span>
-        </template>
-      </el-table-column>-->
       <el-table-column label="申请人" width="180">
         <template slot-scope="scope">
-          <span>{{ scope.row.username || scope.row.userid || '-' }}</span>
+          <span>{{ scope.row.username || '-' }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="count" label="数量" width="180">
+      <el-table-column label="数量" width="180">
+        <template slot-scope="scope">
+          <span :class="{ 'in-count': isInRecord(scope.row), 'out-count': isOutRecord(scope.row) }">
+            {{ formatCount(scope.row) }}
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作类型" width="100">
+        <template slot-scope="scope">
+          <el-tag :type="isInRecord(scope.row) ? 'success' : 'danger'">
+            {{ isInRecord(scope.row) ? '入库' : '出库' }}
+          </el-tag>
+        </template>
       </el-table-column>
       <el-table-column prop="createtime" label="操作时间" width="180">
         <template slot-scope="scope">
@@ -91,27 +98,92 @@
 export default {
   name: "RecordManage",
   data() {
-
     return {
-      user : JSON.parse(sessionStorage.getItem('CurUser')),
-      storage:'',
-      goodstype:'',
-      goodstypeData:[],
-      storageData:[],
+      user: JSON.parse(sessionStorage.getItem('CurUser')),
+      storage: '',
+      goodstype: '',
+      goodstypeData: [],
+      storageData: [],
+      goodsList: [],
+      userList: [],
       tableData: [],
-      pageSize:10,
-      pageNum:1,
-      total:0,
-      name:'',
-      centerDialogVisible:false,
-      form:{
-        id:'',
-        name:'',
-        storage:'',
-        goodstype:'',
-        count:'',
-        remark:''
+      pageSize: 10,
+      pageNum: 1,
+      total: 0,
+      name: '',
+      centerDialogVisible: false,
+      form: {
+        id: '',
+        name: '',
+        storage: '',
+        goodstype: '',
+        count: '',
+        remark: ''
       },
+      dataLoaded: {
+        goods: false,
+        users: false,
+        storage: false,
+        goodstype: false
+      }
+    }
+  },
+  computed: {
+    mergedTableData() {
+      if (!this.tableData || this.tableData.length === 0) {
+        return [];
+      }
+      
+      return this.tableData.map(record => {
+        const result = { ...record };
+        
+        if (record.goods && this.goodsList && this.goodsList.length > 0) {
+          const goods = this.goodsList.find(g => g.id == record.goods);
+          result.goodsname = goods ? goods.name : '-';
+        } else {
+          result.goodsname = '-';
+        }
+        
+        console.log('处理用户名称:', record);
+        
+        const possibleUserIdFields = ['userId', 'userid', 'user_id', 'user'];
+        let userId = null;
+        for (const field of possibleUserIdFields) {
+          if (record[field] !== undefined && record[field] !== null) {
+            userId = record[field];
+            console.log('找到用户ID字段:', field, userId);
+            break;
+          }
+        }
+        
+        if (userId && this.userList && this.userList.length > 0) {
+          console.log('尝试匹配用户:', userId, this.userList);
+          const user = this.userList.find(u => {
+            console.log('比较:', u.id, userId, u.id == userId);
+            return u.id == userId;
+          });
+          result.username = user ? user.name : '-';
+          console.log('匹配结果:', user, result.username);
+        } else {
+          result.username = '-';
+        }
+        
+        if (record.storage && this.storageData && this.storageData.length > 0) {
+          const storage = this.storageData.find(s => s.id == record.storage);
+          result.storagename = storage ? storage.name : '-';
+        } else {
+          result.storagename = record.storagename || '-';
+        }
+        
+        if (record.goodstype && this.goodstypeData && this.goodstypeData.length > 0) {
+          const type = this.goodstypeData.find(t => t.id == record.goodstype);
+          result.typename = type ? type.name : '-';
+        } else {
+          result.typename = record.typename || '-';
+        }
+        
+        return result;
+      });
     }
   },
   methods:{
@@ -150,13 +222,13 @@ export default {
           storage:this.storage+'',
           roleId:this.user.roleId+'',
           userId:this.user.id+''
-
         }
       }).then(res=>res.data).then(res=>{
         console.log('Record data:', res.data);
         if(res.code==200){
           this.tableData=res.data
           this.total=res.total
+          this.ensureReferenceDataLoaded()
         }else{
           this.$message.error('获取数据失败')
         }
@@ -166,11 +238,26 @@ export default {
         this.$message.error('加载记录失败')
       })
     },
+    ensureReferenceDataLoaded() {
+      if (!this.dataLoaded.goods) {
+        this.loadGoods();
+      }
+      if (!this.dataLoaded.users) {
+        this.loadUsers();
+      }
+      if (!this.dataLoaded.storage) {
+        this.loadStorage();
+      }
+      if (!this.dataLoaded.goodstype) {
+        this.loadGoodstype();
+      }
+    },
     loadStorage(){
       this.$axios.get(this.$httpUrl+'/storage/list').then(res=>res.data).then(res=>{
         console.log(res)
         if(res.code==200){
           this.storageData=res.data
+          this.dataLoaded.storage = true;
         }else{
           this.$message.error('获取仓库数据失败')
         }
@@ -182,18 +269,71 @@ export default {
         console.log(res)
         if(res.code==200){
           this.goodstypeData=res.data
+          this.dataLoaded.goodstype = true;
         }else{
           this.$message.error('获取分类数据失败')
         }
 
       })
+    },
+    loadGoods(){
+      this.$axios.get(this.$httpUrl+'/goods/list').then(res=>res.data).then(res=>{
+        if(res.code==200){
+          this.goodsList=res.data
+          this.dataLoaded.goods = true;
+        }else{
+          this.$message.error('获取商品数据失败')
+        }
+      }).catch(err => {
+        console.error('加载商品失败:', err)
+        this.$message.error('加载商品失败')
+      })
+    },
+    loadUsers(){
+      this.$axios.get(this.$httpUrl+'/user/list').then(res=>res.data).then(res=>{
+        if(res.code==200){
+          this.userList=res.data
+          this.dataLoaded.users = true;
+        }else{
+          this.$message.error('获取用户数据失败')
+        }
+      }).catch(err => {
+        console.error('加载用户失败:', err)
+        this.$message.error('加载用户失败')
+      })
+    },
+    isInRecord(record) {
+      return record.action === '1' || (record.action === 1);
+    },
+    isOutRecord(record) {
+      return record.action === '2' || (record.action === 2);
+    },
+    formatCount(record) {
+      if (!record || record.count === undefined) return '-';
+      
+      if (this.isInRecord(record)) {
+        return '+' + record.count;
+      } else if (this.isOutRecord(record)) {
+        return '-' + record.count;
+      } else {
+        return record.count;
+      }
     }
   },
 
   beforeMount() {
-    this.loadStorage()
-    this.loadGoodstype()
-    this.loadPost()
+    Promise.all([
+      this.loadStorage(),
+      this.loadGoodstype(),
+      this.loadGoods(),
+      this.loadUsers()
+    ]).then(() => {
+      console.log('所有引用数据加载完成，开始加载主数据');
+      this.loadPost();
+    }).catch(error => {
+      console.error('引用数据加载失败:', error);
+      this.loadPost();
+    });
   }
 }
 </script>
@@ -203,6 +343,16 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.in-count {
+  color: #67C23A;
+  font-weight: bold;
+}
+
+.out-count {
+  color: #F56C6C;
+  font-weight: bold;
 }
 </style>
 
