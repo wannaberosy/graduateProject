@@ -33,4 +33,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public IPage pageCC(IPage<User> page, Wrapper wrapper) {
         return userMapper.pageCC(page,wrapper);
     }
+
+    public String getName(){
+        return userMapper.getClass().getName();
+    }
 }

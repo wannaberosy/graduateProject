@@ -26,6 +26,7 @@
       <el-button type="primary" style="margin-left: 10px;" @click="add" v-if="user.roleId!=2">新增</el-button>
       <el-button type="primary" style="margin-left: 10px;" @click="inGoods" v-if="user.roleId!=2">入库</el-button>
       <el-button type="primary" style="margin-left: 10px;" @click="outGoods" v-if="user.roleId!=2">出库</el-button>
+      <el-button type="warning" @click="showImportDialog" v-if="user.roleId!=2">批量导入</el-button>
 
     </div>
     <el-table :data="tableData"
@@ -191,16 +192,25 @@
         :goods-id="currentRow.id"
       />
     </el-dialog>
+
+    <import-data-dialog 
+      :visible.sync="importDialogVisible" 
+      :import-type="'goods'" 
+      :show-type-select="false" 
+      title="批量导入数据资产"
+      @import-success="loadPost"
+    />
   </div>
 </template>
 
 <script>
 import SelectUser from "../user/SelectUser.vue";
 import CommentList from '../commentlist/CommentList.vue'
+import ImportDataDialog from '../common/ImportDataDialog.vue'
 
 export default {
   name: "GoodsManage",
-  components:{SelectUser, CommentList},
+  components:{SelectUser, CommentList, ImportDataDialog},
   data() {
     let checkDuplicate =(rule,value,callback)=>{
       if(this.form.id){
@@ -276,6 +286,7 @@ export default {
         ]
       },
       commentDialogVisible: false,
+      importDialogVisible: false
     }
   },
   methods:{
@@ -527,6 +538,9 @@ export default {
     showComments(row) {
       this.currentRow = row;
       this.commentDialogVisible = true;
+    },
+    showImportDialog() {
+      this.importDialogVisible = true;
     },
   },
 

@@ -22,8 +22,7 @@
       </el-select>
       <el-button type="primary" style="margin-left: 5px;" @click="loadPost">查询</el-button>
       <el-button type="success" @click="resetParam">重置</el-button>
-
-
+<!--      <el-button type="warning" @click="showImportDialog" style="float: right; margin-left: 10px;">批量入库</el-button>-->
     </div>
     <el-table :data="mergedTableData"
               :header-cell-style="{ background: '#f2f5fc', color: '#555555' }"
@@ -91,12 +90,24 @@
         :total="total">
     </el-pagination>
 
+    <import-data-dialog 
+      :visible.sync="importDialogVisible" 
+      :import-type="'records'" 
+      :show-type-select="false" 
+      title="批量入库记录导入"
+      @import-success="loadPost"
+    />
   </div>
 </template>
 
 <script>
+import ImportDataDialog from '../common/ImportDataDialog.vue';
+
 export default {
   name: "RecordManage",
+  components: {
+    ImportDataDialog
+  },
   data() {
     return {
       user: JSON.parse(sessionStorage.getItem('CurUser')),
@@ -125,7 +136,8 @@ export default {
         users: false,
         storage: false,
         goodstype: false
-      }
+      },
+      importDialogVisible: false
     }
   },
   computed: {
@@ -318,6 +330,9 @@ export default {
       } else {
         return record.count;
       }
+    },
+    showImportDialog() {
+      this.importDialogVisible = true;
     }
   },
 
